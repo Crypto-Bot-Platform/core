@@ -1,2 +1,4 @@
 git+https://github.com/Crypto-Bot-Platform/cbpcommon@main
-ccxt~=1.71.59
+ccxt==1.73.85
+avro
+confluent_kafka

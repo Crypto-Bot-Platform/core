@@ -1,5 +1,6 @@
 import datetime
 import time
+from esloger import Logger
 
 from exchange import Exchange
 
@@ -34,6 +35,7 @@ class ExchangePublic(Exchange):
             }
         }
         self.rate = self.client.rateLimit
+        self.log = Logger(exchange_id)
 
     def get_symbols(self):
         return self.client.symbols
@@ -49,16 +51,18 @@ class ExchangePublic(Exchange):
 
     def on(self, command):
         if datetime.datetime.timestamp(datetime.datetime.now()) - command['timestamp'] >= 10:
-            print(f"Skip old command timestamp {command['timestamp']}")
+            self.log.warning(f"Skip old command timestamp {command['timestamp']}")
             return
         if command['command'] == "Tick":
+            self.log.info(f"Got ticker command for pair {command['pair']}")
             ticker = self.get_ticker(command['pair'])
             print(ticker)
         elif command['command'] == "OrderBook":
+            self.log.info(f"Got order book command for pair {command['pair']}")
             ob = self.get_order_book(command['pair'])
             print(ob)
         else:
-            print("Error Unknown command")
+            self.log.error(f"Unknown command {command['command']}")
 
     def listen(self):
         self.em.wait_for_command(f"{self.exchange_id}", schema_str, on=self.on)
