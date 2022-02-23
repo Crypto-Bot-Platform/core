@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: Global market pulser
+  name: global-market
   labels:
     app: global-market
 spec:
@@ -20,4 +20,4 @@ spec:
       hostNetwork: true
       containers:
         - name: global-market
-          image: 'global-market:latest'
+          image: 'tsboris/cbp-global-market:latest'
