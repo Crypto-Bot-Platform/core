@@ -1,6 +1,6 @@
 import datetime
-import httpimport
 import time
+
 from eslogger import Logger
 
 from exchange import Exchange
