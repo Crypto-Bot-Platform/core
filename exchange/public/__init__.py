@@ -1,6 +1,7 @@
 import datetime
+import httpimport
 import time
-from esloger import Logger
+from eslogger import Logger
 
 from exchange import Exchange
 
