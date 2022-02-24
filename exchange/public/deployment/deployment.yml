@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: Bittrex public exchange
+  name: cbp-bittrex-public
   labels:
     app: cbp-bittrex-public
 spec:
@@ -20,4 +20,4 @@ spec:
       hostNetwork: true
       containers:
         - name: cbp-bittrex-public
-          image: 'cbp-bittrex-public:latest'
+          image: 'tsboris/cbp-bittrex-public:latest'
