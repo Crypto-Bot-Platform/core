@@ -1,27 +1,10 @@
 import datetime
 import time
-
+import events
 from eslogger import Logger
-
 from exchange import Exchange
-
-schema_str = """
-{
-        "namespace": "confluent.io.examples.serialization.avro",
-        "name": "CBPCommand",
-        "type": "record",
-        "fields": [   
-            {"name": "timestamp", "type": "long", "logicalType": "timestamp-millis"},         
-            {"name": "pair", "type": "string"},
-            {"name": "command", "type": {
-                    "type": "enum",
-                    "name": "Command",
-                    "symbols": ["Tick", "OrderBook"]
-                }
-            }
-        ]
-}
-"""
+from schemas.globalmarket import GlobalMarketCommandSchema
+from schemas.recorder import RecorderSchema
 
 
 class ExchangePublic(Exchange):
@@ -37,6 +20,7 @@ class ExchangePublic(Exchange):
         }
         self.rate = self.client.rateLimit
         self.log = Logger(exchange_id)
+        self.em = events.EventManager()
 
     def get_symbols(self):
         return self.client.symbols
@@ -57,17 +41,42 @@ class ExchangePublic(Exchange):
         if command['command'] == "Tick":
             self.log.info(f"Got ticker command for pair {command['pair']}")
             ticker = self.get_ticker(command['pair'])
-            print(ticker)
+            self.em.send_command_to_address('recorder', RecorderSchema, {
+                "timestamp": int(datetime.datetime.timestamp(datetime.datetime.now())),
+                "type": "ticker",
+                "search_index": "global-data",
+                "data": {
+                    "pair": ticker['symbol'],
+                    "exchange": self.exchange_id,
+                    "high": ticker['high'],
+                    "low": ticker['low'],
+                    "bid": ticker['bid'],
+                    "bidVolume": ticker['bidVolume'],
+                    "ask": ticker['ask'],
+                    "askVolume": ticker['askVolume'],
+                    "open": ticker['open'],
+                    "close": ticker['close'],
+                    "last": ticker['last'],
+                    "baseVolume": ticker['baseVolume'],
+                    "quoteVolume": ticker['quoteVolume']
+                }
+            })
         elif command['command'] == "OrderBook":
             self.log.info(f"Got order book command for pair {command['pair']}")
             ob = self.get_order_book(command['pair'])
-            print(ob)
+            self.em.send_command_to_address('recorder', RecorderSchema, {
+                "timestamp": int(datetime.datetime.timestamp(datetime.datetime.now())),
+                "type": "order_book",
+                "search_index": "global-data",
+                "data": {"pair": ob['symbol'], "exchange": self.exchange_id, "bids": ob['bids'], "asks": ob['asks']}
+            })
         else:
             self.log.error(f"Unknown command {command['command']}")
 
     def listen(self):
-        self.em.wait_for_command(f"{self.exchange_id}", schema_str, on=self.on)
+        self.em.wait_for_command(f"{self.exchange_id}", GlobalMarketCommandSchema, on=self.on)
 
 
 if __name__ == "__main__":
-    e = ExchangePublic('bittrex')
+    # e = ExchangePublic('bittrex')
+    pass

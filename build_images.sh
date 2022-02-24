@@ -8,3 +8,6 @@ echo 'Building global market image...'
 docker build -f global-market/deployment/Dockerfile -t tsboris/cbp-global-market:latest .
 docker push tsboris/cbp-global-market:latest
 
+echo 'Building elastic recorder...'
+docker build -f recorder/deployment/Dockerfile.elastic -t tsboris/cbp-elastic-recorder:latest .
+docker push tsboris/cbp-elastic-recorder:latest

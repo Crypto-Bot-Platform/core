@@ -3,29 +3,12 @@ import threading
 import time
 from exchange.public.bittrex import Bittrex
 import events
+from schemas.globalmarket import GlobalMarketCommandSchema
 
 # TODO: Read this from config file
 bases = ['BTC', 'USD', 'ETH', 'USDT', 'USDC']
 coins = ['BTC', 'ETH', 'USDT', 'USDC', 'BNB', 'ADA', 'SOL', 'XRP', 'LUNA', 'DOT', 'DODGE', 'AVAX', 'BUSD', 'MATIC',
          'SHIB', 'UST', 'BCH', 'RVN', 'IOTX']
-
-schema_str = """
-{
-        "namespace": "confluent.io.examples.serialization.avro",
-        "name": "CBPCommand",
-        "type": "record",
-        "fields": [  
-            {"name": "timestamp", "type": "long", "logicalType": "timestamp-millis"},           
-            {"name": "pair", "type": "string"},
-            {"name": "command", "type": {
-                    "type": "enum",
-                    "name": "Command",
-                    "symbols": ["Tick", "OrderBook"]
-                }
-            }
-        ]
-}
-"""
 
 
 def filter_pairs(pairs):
@@ -54,10 +37,10 @@ def pulse_commands(exchange):
     em = events.EventManager()
     while True:
         pair = exchange['pairs'][counter % total_pairs]
-        em.send_command_to_address(exchange['id'], schema_str, {
+        em.send_command_to_address(exchange['id'], GlobalMarketCommandSchema, {
             "timestamp": int(datetime.datetime.timestamp(datetime.datetime.now())),
             "pair": pair,
-            "command": "OrderBook"
+            "command": "Tick"
         })
         counter += 1
         time.sleep(exchange['rate'] / 1000)

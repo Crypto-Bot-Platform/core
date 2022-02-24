@@ -1,5 +1,9 @@
-cbpcommon==0.0.6
+cbpcommon==0.0.7
 ccxt==1.73.85
-avro
+avro~=1.11.0
 confluent_kafka
 httpimport==0.7.2
+
+exchange~=0.3
+elasticsearch~=7.16.3
+pytz~=2021.3
