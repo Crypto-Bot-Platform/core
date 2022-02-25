@@ -43,7 +43,7 @@ class ExchangePublic(Exchange):
             'options':      self.client.options
         }
 
-        collection.update_one({'_id': self.exchange_id}, {"$set": exchange_data}, upsert=False)
+        collection.update_one({'_id': self.exchange_id}, {"$set": exchange_data}, upsert=True)
 
     def get_symbols(self):
         return self.client.symbols
