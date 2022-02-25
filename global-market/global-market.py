@@ -36,6 +36,7 @@ for exchange in db_client.cbp.exchanges.find():
 
 def pulse_commands(exchange):
     try:
+        time.sleep(30)
         counter = 0
         total_pairs = len(exchange['pairs'])
         em = events.EventManager()
