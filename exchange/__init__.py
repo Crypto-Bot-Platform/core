@@ -1,3 +1,5 @@
+import time
+
 import ccxt
 import events
 
@@ -11,6 +13,8 @@ class Exchange:
         self.client = exchange_class()
 
         self.em = events.EventManager()
+        self.em.delete_address(f"{exchange_id}")
+        time.sleep(10)
         self.em.create_address(f"{exchange_id}")
 
     def __del__(self):
