@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cbp-exchanges-public
+  name: cbp-bittrex-public
   labels:
-    app: cbp-exchanges-public
+    app: cbp-bittrex-public
 spec:
   selector:
     matchLabels:
@@ -14,12 +14,10 @@ spec:
   template:
     metadata:
       labels:
-        app: cbp-exchanges-public
+        app: cbp-bittrex-public
         octopusexport: OctopusExport
     spec:
       hostNetwork: true
       containers:
         - name: cbp-bittrex-public
           image: 'tsboris/cbp-bittrex-public:latest'
-        - name: cbp-binanceus-public
-          image: 'tsboris/cbp-binanceus-public:latest'
