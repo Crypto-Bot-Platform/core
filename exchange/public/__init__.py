@@ -2,6 +2,7 @@ import datetime
 import time
 import events
 from eslogger import Logger
+from pymongo import MongoClient
 from exchange import Exchange
 from schemas.globalmarket import GlobalMarketCommandSchema
 from schemas.recorder import RecorderSchema
@@ -19,8 +20,30 @@ class ExchangePublic(Exchange):
             }
         }
         self.rate = self.client.rateLimit
+
         self.log = Logger(exchange_id)
         self.em = events.EventManager()
+        self.db_client = MongoClient()
+        self.record_exchange_data()
+
+    def record_exchange_data(self):
+        collection = self.db_client['cbp']['exchanges']
+        exchange_data = {
+            "_id":          self.client.id,
+            "name":         self.client.name,
+            "version":      self.client.version,
+            "timeout":      self.client.timeout,
+            "rateLimit":    self.client.rateLimit,
+            'urls':         self.client.urls,
+            'has':          self.client.has,
+            'timeframes':   self.client.timeframes,
+            'markets':      self.client.markets,
+            'symbols':      self.client.symbols,
+            'currencies':   self.client.currencies,
+            'options':      self.client.options
+        }
+
+        collection.update_one({'_id': self.exchange_id}, {"$set": exchange_data}, upsert=True)
 
     def get_symbols(self):
         return self.client.symbols
@@ -39,7 +62,7 @@ class ExchangePublic(Exchange):
             self.log.warning(f"Skip old command timestamp {command['timestamp']}")
             return
         if command['command'] == "Tick":
-            self.log.info(f"Got ticker command for pair {command['pair']}")
+            self.log.debug(f"Got ticker command for pair {command['pair']}")
             ticker = self.get_ticker(command['pair'])
             self.em.send_command_to_address('recorder', RecorderSchema, {
                 "timestamp": int(datetime.datetime.timestamp(datetime.datetime.now())),
@@ -62,7 +85,7 @@ class ExchangePublic(Exchange):
                 }
             })
         elif command['command'] == "OrderBook":
-            self.log.info(f"Got order book command for pair {command['pair']}")
+            self.log.debug(f"Got order book command for pair {command['pair']}")
             ob = self.get_order_book(command['pair'])
             self.em.send_command_to_address('recorder', RecorderSchema, {
                 "timestamp": int(datetime.datetime.timestamp(datetime.datetime.now())),
@@ -77,6 +100,3 @@ class ExchangePublic(Exchange):
         self.em.wait_for_command(f"{self.exchange_id}", GlobalMarketCommandSchema, on=self.on)
 
 
-if __name__ == "__main__":
-    # e = ExchangePublic('bittrex')
-    pass

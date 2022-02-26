@@ -1,14 +1,17 @@
 import datetime
 import threading
 import time
-from exchange.public.bittrex import Bittrex
+from eslogger import Logger
+from pymongo import MongoClient
 import events
 from schemas.globalmarket import GlobalMarketCommandSchema
 
-# TODO: Read this from config file
-bases = ['BTC', 'USD', 'ETH', 'USDT', 'USDC']
-coins = ['BTC', 'ETH', 'USDT', 'USDC', 'BNB', 'ADA', 'SOL', 'XRP', 'LUNA', 'DOT', 'DODGE', 'AVAX', 'BUSD', 'MATIC',
-         'SHIB', 'UST', 'BCH', 'RVN', 'IOTX']
+log = Logger("global-market")
+
+db_client = MongoClient()
+config = db_client.cbp.config.find_one({"_id": "global-market"}, {"crypto.bases": 1, "crypto.coins": 1})
+bases = config['crypto']['bases']
+coins = config['crypto']['coins']
 
 
 def filter_pairs(pairs):
@@ -22,30 +25,35 @@ def filter_pairs(pairs):
     return result
 
 
-# TODO: Get exchanges from DB
-bittrex = Bittrex()
-exchanges = [{
-    "id": "bittrex",
-    "pairs": filter_pairs(bittrex.get_symbols()),
-    "rate": bittrex.rate
-}]
+exchanges = []
+for exchange in db_client.cbp.exchanges.find():
+    exchanges.append({
+        "id":       exchange['_id'],
+        "pairs":    filter_pairs(exchange['symbols']),
+        "rate":     exchange['rateLimit']
+    })
 
 
 def pulse_commands(exchange):
-    counter = 0
-    total_pairs = len(exchange['pairs'])
-    em = events.EventManager()
-    while True:
-        pair = exchange['pairs'][counter % total_pairs]
-        em.send_command_to_address(exchange['id'], GlobalMarketCommandSchema, {
-            "timestamp": int(datetime.datetime.timestamp(datetime.datetime.now())),
-            "pair": pair,
-            "command": "Tick"
-        })
-        counter += 1
-        time.sleep(exchange['rate'] / 1000)
+    try:
+        time.sleep(40)
+        counter = 0
+        total_pairs = len(exchange['pairs'])
+        em = events.EventManager()
+        while True:
+            pair = exchange['pairs'][counter % total_pairs]
+            em.send_command_to_address(exchange['id'], GlobalMarketCommandSchema, {
+                "timestamp": int(datetime.datetime.timestamp(datetime.datetime.now())),
+                "pair": pair,
+                "command": "Tick"
+            })
+            counter += 1
+            time.sleep(exchange['rate'] / 1000)
+    except Exception as e:
+        log.error(f"Error while sending commands to {exchange['id']}. [{e}]")
 
 
 for exchange in exchanges:
+    log.info(f"Start sending command to exchange {exchange['id']}")
     x = threading.Thread(target=pulse_commands, args=(exchange,))
     x.start()
