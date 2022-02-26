@@ -8,7 +8,7 @@ spec:
   selector:
     matchLabels:
       octopusexport: OctopusExport
-  replicas: 20
+  replicas: 30
   strategy:
     type: RollingUpdate
   template:

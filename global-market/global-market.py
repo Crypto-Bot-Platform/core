@@ -48,7 +48,8 @@ def pulse_commands(exchange):
                 "command": "Tick"
             })
             counter += 1
-            time.sleep(exchange['rate'] / 1000)
+            request_rate = exchange['rate'] / 1000 if exchange['rate'] >= 1000 else exchange['rate'] * 2 / 1000
+            time.sleep(request_rate)
     except Exception as e:
         log.error(f"Error while sending commands to {exchange['id']}. [{e}]")
 
