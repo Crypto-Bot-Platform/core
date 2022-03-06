@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cbp-binanceus-public
+  name: cbp-ftx-public
   labels:
-    app: cbp-binanceus-public
+    app: cbp-ftx-public
 spec:
   selector:
     matchLabels:
       octopusexport: OctopusExport
-  replicas: 3
+  replicas: 5
   strategy:
     type: RollingUpdate
   template:
     metadata:
       labels:
-        app: cbp-binanceus-public
+        app: cbp-ftx-public
         octopusexport: OctopusExport
     spec:
       hostNetwork: true
       containers:
-        - name: cbp-binanceus-public
-          image: 'tsboris/cbp-binanceus-public:latest'
+        - name: cbp-ftx-public
+          image: 'tsboris/cbp-ftx-public:latest'

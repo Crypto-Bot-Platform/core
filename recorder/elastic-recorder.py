@@ -20,6 +20,7 @@ class ElasticRecorder:
         self.log = Logger(self.__class__.__name__)
         self.em = events.EventManager()
         self.em.create_address(self.address)
+        self.em.modify_mailbox_size(self.address, 2)
 
     def record(self, data):
         body = {"timestamp":  datetime.fromtimestamp(data['timestamp']).astimezone(pytz.UTC),
