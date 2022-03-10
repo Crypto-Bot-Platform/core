@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 import events
@@ -23,7 +24,7 @@ class TimescaleRecorder:
         self.init_db()
 
     def init_db(self):
-        fd = open('bootstrap/init_db.sql', 'r')
+        fd = open('recorder/bootstrap/init_db.sql', 'r')
         sql_content = fd.read()
         sql_content = sql_content.strip()
         fd.close()
