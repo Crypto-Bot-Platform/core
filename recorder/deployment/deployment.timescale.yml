@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timescale-recorder
+  labels:
+    app: timescale-recorder
+spec:
+  selector:
+    matchLabels:
+      octopusexport: OctopusExport
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: timescale-recorder
+        octopusexport: OctopusExport
+    spec:
+      hostNetwork: true
+      containers:
+        - name: timescale-recorder
+          image: 'tsboris/cbp-timescale-recorder:latest'

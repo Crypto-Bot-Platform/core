@@ -15,3 +15,7 @@ docker push tsboris/cbp-global-market:latest
 echo 'Building elastic recorder...'
 docker build -f recorder/deployment/Dockerfile.elastic -t tsboris/cbp-elastic-recorder:latest .
 docker push tsboris/cbp-elastic-recorder:latest
+
+echo 'Building timescale recorder...'
+docker build -f recorder/deployment/Dockerfile.timescale -t tsboris/cbp-timescale-recorder:latest .
+docker push tsboris/cbp-timescale-recorder:latest

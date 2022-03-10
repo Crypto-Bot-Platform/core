@@ -9,3 +9,4 @@ elasticsearch~=7.16.3
 pytz~=2021.3
 pymongo~=4.0.1
 numpy~=1.22.2
+psycopg2==2.9.3
