@@ -1,4 +1,6 @@
 import os
+import threading
+import time
 from datetime import datetime
 
 import events
@@ -14,7 +16,7 @@ class TimescaleRecorder:
         self.address = "db-recorder"
         self.em = events.EventManager()
         self.em.create_address(self.address)
-
+        # TODO: Use config file
         db_name = "cbp"
         db_user = "cbp_user"
         db_pass = "Password1234"
@@ -49,7 +51,7 @@ class TimescaleRecorder:
                 (time, exchange, pair, opening_price, highest_price,   
                  lowest_price, closing_price, volume_base, volume_coin)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);""", (
-                      str(datetime.fromtimestamp(data['timestamp'])),
+                      str(datetime.fromtimestamp(data['timestamp'] / 1000, datetime.now().astimezone().tzinfo)),
                       data['data']['exchange'],
                       data['data']['pair'],
                       data['data']['open'],
@@ -71,32 +73,32 @@ class TimescaleRecorder:
 
 if __name__ == "__main__":
     t = TimescaleRecorder()
-    t.listen()
+    #t.listen()
 
-    # threading.Thread(target=t.listen).start()
-    #
-    # pair = "BTC/USD"
-    #
-    # em = events.EventManager()
-    # em.send_command_to_address("db-recorder", RecorderSchema, {
-    #     "timestamp": int(datetime.timestamp(datetime.now())),
-    #     "type": "ticker",
-    #     "search_index": "delete_me",
-    #     "data": {
-    #         "pair": pair,
-    #         "exchange": "ftx",
-    #         "high": 34501,
-    #         "low": 34451,
-    #         "bid": 34456.5555,
-    #         "bidVolume": 345621234,
-    #         "ask": 34458.567,
-    #         "askVolume": 32123478,
-    #         "open": 34456,
-    #         "close": 34557,
-    #         "last": 34501.786,
-    #         "baseVolume": 98787665,
-    #         "quoteVolume": 766537865
-    #     }
-    # })
-    #
-    # time.sleep(100)
+    threading.Thread(target=t.listen).start()
+
+    pair = "BTC/USD"
+
+    em = events.EventManager()
+    em.send_command_to_address("db-recorder", RecorderSchema, {
+        "timestamp": int(time.time() * 1000),
+        "type": "ticker",
+        "search_index": "delete_me",
+        "data": {
+            "pair": pair,
+            "exchange": "ftx",
+            "high": 34501,
+            "low": 34451,
+            "bid": 34456.5555,
+            "bidVolume": 345621234,
+            "ask": 34458.567,
+            "askVolume": 32123478,
+            "open": 34456,
+            "close": 34557,
+            "last": 34501.786,
+            "baseVolume": 98787665,
+            "quoteVolume": 766537865
+        }
+    })
+
+    time.sleep(100)

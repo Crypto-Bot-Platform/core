@@ -1,6 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
 
-CREATE TABLE IF NOT EXISTS "public".ticks ( time TIMESTAMP WITHOUT TIME ZONE NOT NULL ,
+CREATE TABLE IF NOT EXISTS "public".ticks ( time TIMESTAMPTZ,
 	exchange varchar NOT NULL ,
 	pair varchar NOT NULL ,
 	opening_price double PRECISION NULL ,
