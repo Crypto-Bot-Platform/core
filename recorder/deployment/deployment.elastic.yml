@@ -19,5 +19,5 @@ spec:
     spec:
       hostNetwork: true
       containers:
-        - name: global-market
+        - name: elastic-recorder
           image: 'tsboris/cbp-elastic-recorder:latest'
