@@ -11,3 +11,4 @@ pymongo~=4.0.1
 numpy~=1.21
 psycopg2==2.9.3
 pandas~=1.4.1
+ta-lib~=0.4.24
