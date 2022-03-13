@@ -16,6 +16,7 @@ class TimescaleRecorder:
         self.address = "db-recorder"
         self.em = events.EventManager()
         self.em.create_address(self.address)
+        self.em.modify_mailbox_size(self.address, 2)
         # TODO: Use config file
         db_name = "cbp"
         db_user = "cbp_user"
@@ -46,20 +47,37 @@ class TimescaleRecorder:
     def record(self, data):
         c = self.conn.cursor()
         try:
-            c.execute("""
-            INSERT INTO ticks 
-                (time, exchange, pair, opening_price, highest_price,   
-                 lowest_price, closing_price, volume_base, volume_coin)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);""", (
-                      str(datetime.fromtimestamp(data['timestamp'] / 1000, datetime.now().astimezone().tzinfo)),
-                      data['data']['exchange'],
-                      data['data']['pair'],
-                      data['data']['open'],
-                      data['data']['high'],
-                      data['data']['low'],
-                      data['data']['close'],
-                      data['data']['baseVolume'],
-                      data['data']['quoteVolume']))
+            if data['type'] == 'ticker':
+                c.execute("""
+                INSERT INTO ticks 
+                    (time, exchange, pair, opening_price, highest_price,   
+                     lowest_price, closing_price, volume_base, volume_coin)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);""", (
+                          str(datetime.fromtimestamp(data['timestamp'] / 1000, datetime.now().astimezone().tzinfo)),
+                          data['data']['exchange'],
+                          data['data']['pair'],
+                          data['data']['open'],
+                          data['data']['high'],
+                          data['data']['low'],
+                          data['data']['close'],
+                          data['data']['baseVolume'],
+                          data['data']['quoteVolume']))
+            elif data['type'] == 'indicator':
+                c.execute("""
+                INSERT INTO indicators
+                (time, exchange, pair, name, value1, value2, value3, value4)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s);""", (
+                    str(datetime.fromtimestamp(data['timestamp'] / 1000, datetime.now().astimezone().tzinfo)),
+                    data['data']['exchange'],
+                    data['data']['pair'],
+                    data['data']['name'],
+                    data['data']['value1'],
+                    data['data']['value2'],
+                    data['data']['value3'],
+                    data['data']['value4']
+                ))
+            else:
+                self.log.error(f"Got unknown request {data['type']}")
         except (Exception, psycopg2.Error) as error:
             self.log.error(error.pgerror)
         self.conn.commit()
@@ -98,6 +116,17 @@ if __name__ == "__main__":
             "last": 34501.786,
             "baseVolume": 98787665,
             "quoteVolume": 766537865
+        }
+    })
+
+    em.send_command_to_address("db-recorder", RecorderSchema, {
+        "timestamp": int(time.time() * 1000),
+        "type": "indicator",
+        "data": {
+            "pair": pair,
+            "exchange": "ftx_not_real",
+            "name": "RSI",
+            "value1": 56.89
         }
     })
 

@@ -1,15 +1,15 @@
+import time
 from typing import Optional
-
 import events
-import numpy
-import pandas
 import talib
 import psycopg2
 from eslogger import Logger
 from pandas import DataFrame
 
+from schemas.recorder import RecorderSchema
 
-class Indicators:
+
+class TechnicalAnalysisIndicators:
     def __init__(self):
         self.log = Logger(self.__class__.__name__)
         self.em = events.EventManager()
@@ -38,12 +38,14 @@ class Indicators:
     def get_closing_prices(self, exchange: str, pair: str, interval: str) -> Optional[DataFrame]:
         c = self.conn.cursor()
         try:
-            query = " \
-            SELECT time, closing_price, opening_price, exchange, pair \
-            FROM ticks \
-            WHERE time > (NOW() - INTERVAL '1 minute') \
-            ORDER BY time; \
-            "
+            query = f"""
+            SELECT time_bucket('1 minute', time) as bucket,
+            avg(closing_price) as avg_price
+            FROM ticks
+            WHERE time > (NOW() - INTERVAL '{interval}') and pair = '{pair}' and exchange = '{exchange}'
+            GROUP BY bucket
+            ORDER BY bucket; 
+            """
             c.execute(query)
             res = c.fetchall()
             return DataFrame(res)
@@ -54,22 +56,43 @@ class Indicators:
             c.close()
 
     def RSI(self, exchange: str, pair: str):
-        df = self.get_closing_prices(exchange, pair, '1 minute')
+        df = self.get_closing_prices(exchange, pair, '1 hour')
         res = talib.RSI(df[1].to_numpy())
-        print(res[-1])
+        self.em.send_command_to_address("db-recorder", RecorderSchema, {
+            "timestamp": int(time.time() * 1000),
+            "type": "indicator",
+            "data": {
+                "pair": pair,
+                "exchange": exchange,
+                "name": "RSI",
+                "value1": res[-1]
+            }
+        })
+
+    def MACD(self, exchange: str, pair: str):
+        df = self.get_closing_prices(exchange, pair, '1 hour')
+        macd, macdsignal, macdhist = talib.MACD(df[1].to_numpy())
+        self.em.send_command_to_address("db-recorder", RecorderSchema, {
+            "timestamp": int(time.time() * 1000),
+            "type": "indicator",
+            "data": {
+                "pair": pair,
+                "exchange": exchange,
+                "name": "MACD",
+                "value1": macd[-1],
+                "value2": macdsignal[-1],
+                "value3": macdhist[-1]
+            }
+        })
 
     def calculate_indicators(self):
         for (exchange, pair) in self.get_available_pairs():
-
             self.RSI(exchange, pair)
+            self.MACD(exchange, pair)
 
 
 if __name__ == "__main__":
-    i = Indicators()
-    i.calculate_indicators()
-    # print(pairs)
-
-    # close = numpy.random.random(100)
-    #
-    # output = talib.SMA(close)
-    # print(output)
+    indicators = TechnicalAnalysisIndicators()
+    while True:
+        indicators.calculate_indicators()
+        time.sleep(30)

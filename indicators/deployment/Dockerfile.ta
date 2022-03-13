@@ -1,0 +1,19 @@
+FROM python:3.9
+
+RUN mkdir /app
+WORKDIR /app
+ADD . /app/
+RUN pip install -r requirements.txt
+
+RUN wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz && \
+  tar -xvzf ta-lib-0.4.0-src.tar.gz && \
+  cd ta-lib/ && \
+  ./configure --prefix=/usr && \
+  make && \
+  make install
+
+RUN rm -R ta-lib ta-lib-0.4.0-src.tar.gz
+
+ENV PYTHONPATH "${PYTHONPATH}:/app"
+
+CMD ["python", "-m", "indicators.ta"]

@@ -7,4 +7,5 @@ kubectl delete deployment cbp-ftx-public
 kubectl delete deployment global-market
 kubectl delete deployment elastic-recorder
 kubectl delete deployment timescale-recorder
+kubectl delete deployment ta-indicators
 
