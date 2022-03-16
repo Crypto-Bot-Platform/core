@@ -15,6 +15,9 @@ RUN wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz && \
 
 RUN rm -R ta-lib ta-lib-0.4.0-src.tar.gz
 
+RUN pip install pandas
+RUN pip install ta-lib
+
 RUN pip install -r requirements.txt
 
 ENV PYTHONPATH "${PYTHONPATH}:/app"
