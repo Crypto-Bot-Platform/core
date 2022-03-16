@@ -1,3 +1,4 @@
+import datetime
 import time
 from typing import Optional
 import events
@@ -27,6 +28,7 @@ class TechnicalAnalysisIndicators:
             c.execute("""
             SELECT distinct exchange, pair
             FROM ticks
+            WHERE time >= now() - INTERVAL '1 hour'
             GROUP BY exchange, pair            
             """)
             data = c.fetchall()
@@ -86,13 +88,20 @@ class TechnicalAnalysisIndicators:
         })
 
     def calculate_indicators(self):
-        for (exchange, pair) in self.get_available_pairs():
+        # start = datetime.datetime.now()
+        available_pairs = self.get_available_pairs()
+        # print(f"Found {len(available_pairs)} pairs. Calculating Indicators")
+        # count = 1
+        for (exchange, pair) in available_pairs:
             self.RSI(exchange, pair)
             self.MACD(exchange, pair)
+            # print(f"{count}: Indicators ready for {exchange}, pair {pair}")
+            # count += 1
+        # print(f"Duration: {datetime.datetime.now() - start}")
 
 
 if __name__ == "__main__":
     indicators = TechnicalAnalysisIndicators()
     while True:
         indicators.calculate_indicators()
-        time.sleep(30)
+        time.sleep(10)
