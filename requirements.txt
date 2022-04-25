@@ -3,10 +3,9 @@ ccxt==1.73.85
 avro~=1.11.0
 confluent_kafka
 httpimport==0.7.2
-
+daal==2021.2.3
 exchange~=0.3
 elasticsearch~=7.16.3
 pytz~=2021.3
 pymongo~=4.0.1
-numpy~=1.22.2
 psycopg2==2.9.3

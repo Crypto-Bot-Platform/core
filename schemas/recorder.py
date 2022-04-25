@@ -6,7 +6,7 @@ RecorderSchema = """
         "fields": [   
             {"name": "timestamp", "type": "long", "logicalType": "timestamp-millis"},         
             {"name": "type", "type": "string"},
-            {"name": "search_index", "type": "string"},
+            {"name": "search_index", "type": ["string", "null"]},
             {"name": "data", "type": [                
                 {
                     "type": "record",
@@ -35,6 +35,19 @@ RecorderSchema = """
                         {"name": "last", "type": ["float", "null"] },
                         {"name": "baseVolume", "type": ["float", "null"] },
                         {"name": "quoteVolume", "type": ["float", "null"] }                        
+                    ]                    
+                },
+                {
+                    "type": "record",
+                    "name": "indicator",
+                    "fields": [                        
+                        {"name": "pair", "type": "string" },
+                        {"name": "exchange", "type": "string"},
+                        {"name": "name", "type": "string" },
+                        {"name": "value1", "type": "float" },                        
+                        {"name": "value2", "type": ["float", "null"] },
+                        {"name": "value3", "type": ["float", "null"] },
+                        {"name": "value4", "type": ["float", "null"] }                        
                     ]                    
                 }
             ]}

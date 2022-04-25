@@ -19,3 +19,7 @@ docker push tsboris/cbp-elastic-recorder:latest
 echo 'Building timescale recorder...'
 docker build -f recorder/deployment/Dockerfile.timescale -t tsboris/cbp-timescale-recorder:latest .
 docker push tsboris/cbp-timescale-recorder:latest
+
+echo 'Building technical analysis indicators...'
+docker build -f indicators/deployment/Dockerfile.ta -t tsboris/cbp-ta-indicators:latest .
+docker push tsboris/cbp-ta-indicators:latest

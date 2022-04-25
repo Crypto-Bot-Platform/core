@@ -65,7 +65,7 @@ class ExchangePublic(Exchange):
             self.log.debug(f"Got ticker command for pair {command['pair']}")
             ticker = self.get_ticker(command['pair'])
             self.em.send_command_to_address('db-recorder', RecorderSchema, {
-                "timestamp": int(datetime.datetime.timestamp(datetime.datetime.now())),
+                "timestamp": int(time.time() * 1000),
                 "type": "ticker",
                 "search_index": "global-data",
                 "data": {
