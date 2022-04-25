@@ -6,16 +6,16 @@ from os import environ
 
 class Exchange:
     def __init__(self, exchange_id: str, config=None):
-        elastic_host = environ['ELASTIC_HOST']
-        elastic_port = environ['ELASTIC_PORT']
-        print(f"*** Environment variables: ELASTIC_HOST={elastic_host}, ELASTIC_PORT={elastic_port}")
+        kafka_host = environ['KAFKA_HOST']
+        kafka_port = environ['KAFKA_PORT']
+        print(f"*** Environment variables: KAFKA_HOST={kafka_host}, KAFKA_PORT={kafka_port}")
         self.exchange_id = exchange_id
         exchange_class = getattr(ccxt, exchange_id)
         if config is not None:
             self.client = exchange_class(config)
         self.client = exchange_class()
 
-        self.em = events.EventManager(host=elastic_host, port=int(elastic_port))
+        self.em = events.EventManager(host=kafka_host, port=int(kafka_port))
         # self.em.delete_address(f"{exchange_id}")
         self.em.create_address(f"{exchange_id}")
 

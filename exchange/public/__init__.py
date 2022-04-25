@@ -15,8 +15,10 @@ class ExchangePublic(Exchange):
         kafka_port = environ['KAFKA_PORT']
         mongo_host = environ['MONGODB_HOST']
         mongo_port = environ['MONGODB_PORT']
-        print(f"*** Environment variables: KAFKA_HOST={kafka_host}, KAFKA_PORT={kafka_port}, "
-              f"MONGODB_HOST={mongo_host}, MONGODB_PORT={mongo_port}")
+        elastic_host = environ['ELASTIC_HOST']
+        elastic_port = environ['ELASTIC_PORT']
+        print(f"*** Environment variables: KAFKA_HOST={kafka_host}, KAFKA_PORT={kafka_port}, MONGODB_HOST={mongo_host}, "
+              f"MONGODB_PORT={mongo_port}, ELASTIC_HOST={elastic_host}, ELASTIC_PORT={elastic_port}")
         super().__init__(exchange_id, conf)
         self.client.load_markets()
         time.sleep(2)
@@ -28,8 +30,8 @@ class ExchangePublic(Exchange):
         }
         self.rate = self.client.rateLimit
 
-        self.log = Logger(exchange_id)
-        self.em = events.EventManager(kafka_host, int(kafka_port))
+        self.log = Logger(exchange_id, host=elastic_host, port=int(elastic_port))
+        self.em = events.EventManager(host=kafka_host, port=int(kafka_port))
         self.db_client = MongoClient(host=mongo_host, port=int(mongo_port))
         self.record_exchange_data()
 
