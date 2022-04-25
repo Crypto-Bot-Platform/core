@@ -29,7 +29,7 @@ class TimescaleRecorder:
         self.address = "db-recorder"
         self.em = events.EventManager(host=kafka_host, port=int(kafka_port))
         self.em.create_address(self.address)
-        self.em.modify_mailbox_size(self.address, 2)
+        self.em.modify_mailbox_size(self.address, 5)
         self.conn = psycopg2.connect(f"postgres://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}")
         self.init_db()
 
