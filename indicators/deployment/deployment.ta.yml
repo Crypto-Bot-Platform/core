@@ -5,6 +5,10 @@ metadata:
   labels:
     app: ta-indicators
 spec:
+  ports:
+  - port: 9092
+    protocol: TCP
+    targetPort: 9092
   selector:
     matchLabels:
       octopusexport: OctopusExport
