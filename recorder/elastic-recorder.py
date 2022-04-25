@@ -16,7 +16,7 @@ from schemas.recorder import RecorderSchema
 class ElasticRecorder:
     def __init__(self):
         self.address = "recorder"
-        self.es = Elasticsearch(hosts='127.0.0.1', port=9200)
+        self.es = Elasticsearch(hosts='10.0.0.124', port=9200)
         self.log = Logger(self.__class__.__name__)
         self.em = events.EventManager()
         self.em.create_address(self.address)

@@ -21,7 +21,7 @@ class TimescaleRecorder:
         db_name = "cbp"
         db_user = "cbp_user"
         db_pass = "Password1234"
-        db_host = "127.0.0.1"
+        db_host = "10.0.0.124"
         db_port = 5432
         self.conn = psycopg2.connect(f"postgres://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}")
         self.init_db()
