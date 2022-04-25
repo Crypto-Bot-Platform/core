@@ -5,10 +5,6 @@ metadata:
   labels:
     app: ta-indicators
 spec:
-  ports:
-  - port: 9092
-    protocol: TCP
-    targetPort: 9092
   selector:
     matchLabels:
       octopusexport: OctopusExport
@@ -25,3 +21,6 @@ spec:
       containers:
         - name: ta-indicators
           image: 'tsboris/cbp-ta-indicators:latest'
+          ports:
+            - containerPort: 9092
+              hostPort: 9092
