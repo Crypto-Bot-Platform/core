@@ -6,23 +6,30 @@ from datetime import datetime
 import events
 import psycopg2
 from eslogger import Logger
-
+from os import environ
 from schemas.recorder import RecorderSchema
 
 
 class TimescaleRecorder:
     def __init__(self):
-        self.log = Logger(self.__class__.__name__)
+        kafka_host = environ['KAFKA_HOST']
+        kafka_port = environ['KAFKA_PORT']
+        elastic_host = environ['ELASTIC_HOST']
+        elastic_port = environ['ELASTIC_PORT']
+        db_name = environ['SQLDB_NAME']
+        db_user = environ['SQLDB_USER']
+        db_pass = environ['SQLDB_PASS']
+        db_host = environ['SQLDB_HOST']
+        db_port = int(environ['SQLDB_PORT'])
+        print(f"*** Environment variables: KAFKA_HOST={kafka_host}, KAFKA_PORT={kafka_port}, "
+              f"ELASTIC_HOST={elastic_host}, ELASTIC_PORT={elastic_port}, SQLDB_HOST={db_host}, "
+              f"SQLDB_PORT={db_port}, SQLDB_NAME = {db_name}, SQLDB_USER={db_user}, SQLDB_PASS={db_pass}")
+
+        self.log = Logger(self.__class__.__name__, host=elastic_host, port=int(elastic_port))
         self.address = "db-recorder"
-        self.em = events.EventManager()
+        self.em = events.EventManager(host=kafka_host, port=int(kafka_port))
         self.em.create_address(self.address)
         self.em.modify_mailbox_size(self.address, 2)
-        # TODO: Use config file
-        db_name = "cbp"
-        db_user = "cbp_user"
-        db_pass = "Password1234"
-        db_host = "10.0.0.124"
-        db_port = 5432
         self.conn = psycopg2.connect(f"postgres://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}")
         self.init_db()
 

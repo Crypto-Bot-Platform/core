@@ -6,10 +6,17 @@ from pymongo import MongoClient
 from exchange import Exchange
 from schemas.globalmarket import GlobalMarketCommandSchema
 from schemas.recorder import RecorderSchema
+from os import environ
 
 
 class ExchangePublic(Exchange):
     def __init__(self, exchange_id, conf=None):
+        kafka_host = environ['KAFKA_HOST']
+        kafka_port = environ['KAFKA_PORT']
+        mongo_host = environ['MONGODB_HOST']
+        mongo_port = environ['MONGODB_PORT']
+        print(f"*** Environment variables: KAFKA_HOST={kafka_host}, KAFKA_PORT={kafka_port}, "
+              f"MONGODB_HOST={mongo_host}, MONGODB_PORT={mongo_port}")
         super().__init__(exchange_id, conf)
         self.client.load_markets()
         time.sleep(2)
@@ -22,8 +29,8 @@ class ExchangePublic(Exchange):
         self.rate = self.client.rateLimit
 
         self.log = Logger(exchange_id)
-        self.em = events.EventManager()
-        self.db_client = MongoClient()
+        self.em = events.EventManager(kafka_host, int(kafka_port))
+        self.db_client = MongoClient(host=mongo_host, port=int(mongo_port))
         self.record_exchange_data()
 
     def record_exchange_data(self):

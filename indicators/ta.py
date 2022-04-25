@@ -6,20 +6,27 @@ import talib
 import psycopg2
 from eslogger import Logger
 from pandas import DataFrame
-
+from os import environ
 from schemas.recorder import RecorderSchema
 
 
 class TechnicalAnalysisIndicators:
     def __init__(self):
-        self.log = Logger(self.__class__.__name__)
-        self.em = events.EventManager()
-        # TODO: Use config file
-        db_name = "cbp"
-        db_user = "cbp_user"
-        db_pass = "Password1234"
-        db_host = "10.0.0.124"
-        db_port = 5432
+        kafka_host = environ['KAFKA_HOST']
+        kafka_port = environ['KAFKA_PORT']
+        elastic_host = environ['ELASTIC_HOST']
+        elastic_port = environ['ELASTIC_PORT']
+        db_name = environ['SQLDB_NAME']
+        db_user = environ['SQLDB_USER']
+        db_pass = environ['SQLDB_PASS']
+        db_host = environ['SQLDB_HOST']
+        db_port = int(environ['SQLDB_PORT'])
+        print(f"*** Environment variables: KAFKA_HOST={kafka_host}, KAFKA_PORT={kafka_port}, "
+              f"ELASTIC_HOST={elastic_host}, ELASTIC_PORT={elastic_port}, SQLDB_HOST={db_host}, "
+              f"SQLDB_PORT={db_port}, SQLDB_NAME = {db_name}, SQLDB_USER={db_user}, SQLDB_PASS={db_pass}")
+
+        self.log = Logger(self.__class__.__name__, host=elastic_host, port=int(elastic_port))
+        self.em = events.EventManager(host=kafka_host, port=int(kafka_port))
         self.conn = psycopg2.connect(f"postgres://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}")
 
     def get_available_pairs(self) -> list[(str, str)]:
