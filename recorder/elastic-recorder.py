@@ -11,14 +11,22 @@ from confluent_kafka import Producer
 from elasticsearch import Elasticsearch
 from eslogger import Logger
 from schemas.recorder import RecorderSchema
+from os import environ
 
 
 class ElasticRecorder:
     def __init__(self):
+        kafka_host = environ['KAFKA_HOST']
+        kafka_port = environ['KAFKA_PORT']
+        elastic_host = environ['ELASTIC_HOST']
+        elastic_port = environ['ELASTIC_PORT']
+        print(f"*** Environment variables: KAFKA_HOST={kafka_host}, KAFKA_PORT={kafka_port}, "
+              f"ELASTIC_HOST={elastic_host}, ELASTIC_PORT={elastic_port}")
+
         self.address = "recorder"
-        self.es = Elasticsearch(hosts='127.0.0.1', port=9200)
-        self.log = Logger(self.__class__.__name__)
-        self.em = events.EventManager()
+        self.es = Elasticsearch(hosts=elastic_host, port=int(elastic_port))
+        self.log = Logger(self.__class__.__name__, host=elastic_host, port=int(elastic_port))
+        self.em = events.EventManager(host=kafka_host, port=int(kafka_port))
         self.em.create_address(self.address)
         self.em.modify_mailbox_size(self.address, 2)
 

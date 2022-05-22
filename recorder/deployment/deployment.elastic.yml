@@ -21,3 +21,12 @@ spec:
       containers:
         - name: elastic-recorder
           image: 'tsboris/cbp-elastic-recorder:latest'
+          env:
+            - name: KAFKA_HOST
+              value: '10.0.0.124'
+            - name: KAFKA_PORT
+              value: '9092'
+            - name: ELASTIC_HOST
+              value: '10.0.0.124'
+            - name: ELASTIC_PORT
+              value: '9200'
