@@ -153,7 +153,7 @@ class TickerTimeDimension:
                 # query_db_table = f"ticks_{self.minutes[idx - 1]}" if idx > 0 else "ticks"
                 query_db_table = "ticks"
                 insert_db_table = f"ticks_{self.minutes[idx]}"
-                prices = self.get_prices(query_db_table, exchange, pair, f"{period * 3} minutes", f"{period} minutes")
+                prices = self.get_prices(query_db_table, exchange, pair, f"{period * 10} minutes", f"{period} minutes")
                 self.record_prices(insert_db_table, exchange, pair, prices)
                 print(prices)
 

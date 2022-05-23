@@ -47,14 +47,24 @@ class TechnicalAnalysisIndicators:
 
     def get_closing_prices(self, exchange: str, pair: str, interval: str, bucket_size: str = "1 minute") -> Optional[DataFrame]:
         c = self.conn.cursor()
-        bucket_minutes = bucket_size.split()[0]
+        bucket_minutes = int(bucket_size.split()[0])
         try:
-            query = f"""
-            SELECT closing_price as avg_price
-            FROM ticks_{bucket_minutes}
-            WHERE time > (NOW() - INTERVAL '{interval}') and pair = '{pair}' and exchange = '{exchange}'            
-            ORDER BY time; 
-            """
+            if bucket_size.split()[1] in ["minutes", "minute"] and bucket_minutes in [1,5,10,30,60]:
+                query = f"""
+                    SELECT closing_price as avg_price
+                    FROM ticks_{bucket_minutes}
+                    WHERE time > (NOW() - INTERVAL '{interval}') and pair = '{pair}' and exchange = '{exchange}'            
+                    ORDER BY time; 
+                """
+            else:
+                query = f"""
+                    SELECT time_bucket('{bucket_size}', time) as bucket,
+                        avg(closing_price) as avg_price
+                        FROM ticks
+                        WHERE time > (NOW() - INTERVAL '{interval}') and pair = '{pair}' and exchange = '{exchange}'
+                        GROUP BY bucket
+                        ORDER BY bucket; 
+                """
             c.execute(query)
             res = c.fetchall()
             return DataFrame(res)
@@ -66,7 +76,7 @@ class TechnicalAnalysisIndicators:
 
     # TODO: Make it more modular! I'm just cutting corners
     def __RSI(self, df: DataFrame, pair: str, exchange: str, suffix: str = "1D"):
-        res = talib.RSI(df[1].to_numpy())
+        res = talib.RSI(df[0].to_numpy())
         self.em.send_command_to_address("db-recorder", RecorderSchema, {
             "timestamp": int(time.time() * 1000),
             "type": "indicator",
@@ -98,7 +108,7 @@ class TechnicalAnalysisIndicators:
 
     def RSI_3M(self, exchange: str, pair: str):
         start = datetime.datetime.now()
-        df = self.get_closing_prices(exchange, pair, '3 months', "1 hour")
+        df = self.get_closing_prices(exchange, pair, '3 months', "60 minutes")
         self.__RSI(df, pair, exchange, "3M")
         print(f"RSI_3M: duration - {datetime.datetime.now() - start}")
 
