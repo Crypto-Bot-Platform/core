@@ -234,10 +234,10 @@ class TickerTimeDimension:
 
 
 if __name__ == "__main__":
-    #t = TimescaleRecorder()
-    #t.listen()
-    ttd = TickerTimeDimension()
-    ttd.start()
+    t = TimescaleRecorder()
+    t.listen()
+    # ttd = TickerTimeDimension()
+    # ttd.start()
 
     # threading.Thread(target=t.listen).start()
     #
