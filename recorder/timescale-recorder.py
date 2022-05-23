@@ -1,4 +1,4 @@
-import os
+import math
 import threading
 import time
 from datetime import datetime
@@ -189,12 +189,12 @@ class TickerTimeDimension:
                 # Skip first row (the latest entry usually contains residual recalculations)
                 continue
             try:
-                opening_price = row[2] if row[2] else 'null'
-                highest_price = row[3] if row[3] else 'null'
-                lowest_price = row[4] if row[4] else 'null'
+                opening_price = row[2] if row[2] and not math.isnan(row[2]) else 'null'
+                highest_price = row[3] if row[3] and not math.isnan(row[3]) else 'null'
+                lowest_price = row[4] if row[4] and not math.isnan(row[4]) else 'null'
                 closing_price = row[1] if row[1] else 'null'
-                volume_base = row[5] if row[5] else 'null'
-                volume_coin = row[6] if row[6] else 'null'
+                volume_base = row[5] if row[5] and not math.isnan(row[5]) else 'null'
+                volume_coin = row[6] if row[6] and not math.isnan(row[6]) else 'null'
                 query = f"""
                 INSERT INTO {target_table}
                     (time, exchange, pair, opening_price, highest_price,   
@@ -213,6 +213,7 @@ class TickerTimeDimension:
                 # print(query)
                 c.execute(query)
             except (Exception, psycopg2.Error) as error:
+                print(query)
                 self.log.error(error.pgerror)
             self.conn.commit()
 
@@ -233,44 +234,46 @@ class TickerTimeDimension:
 
 
 if __name__ == "__main__":
-    t = TimescaleRecorder()
+    #t = TimescaleRecorder()
     #t.listen()
+    ttd = TickerTimeDimension()
+    ttd.start()
 
-    threading.Thread(target=t.listen).start()
+    # threading.Thread(target=t.listen).start()
+    #
+    # pair = "BTC/USD"
+    #
+    # em = events.EventManager()
+    # em.send_command_to_address("db-recorder", RecorderSchema, {
+    #     "timestamp": int(time.time() * 1000),
+    #     "type": "ticker",
+    #     "search_index": "delete_me",
+    #     "data": {
+    #         "pair": pair,
+    #         "exchange": "ftx",
+    #         "high": 34501,
+    #         "low": 34451,
+    #         "bid": 34456.5555,
+    #         "bidVolume": 345621234,
+    #         "ask": 34458.567,
+    #         "askVolume": 32123478,
+    #         "open": 34456,
+    #         "close": 34557,
+    #         "last": 34501.786,
+    #         "baseVolume": 98787665,
+    #         "quoteVolume": 766537865
+    #     }
+    # })
+    #
+    # em.send_command_to_address("db-recorder", RecorderSchema, {
+    #     "timestamp": int(time.time() * 1000),
+    #     "type": "indicator",
+    #     "data": {
+    #         "pair": pair,
+    #         "exchange": "ftx_not_real",
+    #         "name": "RSI",
+    #         "value1": 56.89
+    #     }
+    # })
 
-    pair = "BTC/USD"
-
-    em = events.EventManager()
-    em.send_command_to_address("db-recorder", RecorderSchema, {
-        "timestamp": int(time.time() * 1000),
-        "type": "ticker",
-        "search_index": "delete_me",
-        "data": {
-            "pair": pair,
-            "exchange": "ftx",
-            "high": 34501,
-            "low": 34451,
-            "bid": 34456.5555,
-            "bidVolume": 345621234,
-            "ask": 34458.567,
-            "askVolume": 32123478,
-            "open": 34456,
-            "close": 34557,
-            "last": 34501.786,
-            "baseVolume": 98787665,
-            "quoteVolume": 766537865
-        }
-    })
-
-    em.send_command_to_address("db-recorder", RecorderSchema, {
-        "timestamp": int(time.time() * 1000),
-        "type": "indicator",
-        "data": {
-            "pair": pair,
-            "exchange": "ftx_not_real",
-            "name": "RSI",
-            "value1": 56.89
-        }
-    })
-
-    time.sleep(100)
+    time.sleep(1000)
