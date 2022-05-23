@@ -115,7 +115,7 @@ class TechnicalAnalysisIndicators:
     def MACD(self, exchange: str, pair: str):
         start = datetime.datetime.now()
         df = self.get_closing_prices(exchange, pair, '1 hour')
-        macd, macdsignal, macdhist = talib.MACD(df[1].to_numpy())
+        macd, macdsignal, macdhist = talib.MACD(df[0].to_numpy())
         self.em.send_command_to_address("db-recorder", RecorderSchema, {
             "timestamp": int(time.time() * 1000),
             "type": "indicator",
