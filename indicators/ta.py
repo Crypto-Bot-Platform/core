@@ -130,9 +130,9 @@ class TechnicalAnalysisIndicators:
         })
         print(f"MACD: duration - {datetime.datetime.now() - start}")
 
-    def PRICE_LR_ANGLE_1MIN(self, exchange: str, pair: str):
+    def PRICE_LR_ANGLE_5MIN(self, exchange: str, pair: str):
         start = datetime.datetime.now()
-        df = self.get_closing_prices(exchange, pair, interval='1 minute', bucket_size="1 second")
+        df = self.get_closing_prices(exchange, pair, interval='5 minute', bucket_size="1 second")
         lra = talib.LINEARREG_ANGLE(df[1].to_numpy())
         self.em.send_command_to_address("db-recorder", RecorderSchema, {
             "timestamp": int(time.time() * 1000),
@@ -140,7 +140,7 @@ class TechnicalAnalysisIndicators:
             "data": {
                 "pair": pair,
                 "exchange": exchange,
-                "name": "PRICE_LR_ANGLE_1MIN",
+                "name": "PRICE_LR_ANGLE_5MIN",
                 "value1": lra[-1],
             }
         })
@@ -164,7 +164,7 @@ class TechnicalAnalysisIndicators:
                 executor.submit(self.MACD, exchange, pair)
 
                 # LR
-                executor.submit(self.PRICE_LR_ANGLE_1MIN, exchange, pair)
+                executor.submit(self.PRICE_LR_ANGLE_5MIN, exchange, pair)
         print(f"Finish generating indicators for. Duration: {datetime.datetime.now() - start}")
 
 
@@ -175,4 +175,4 @@ if __name__ == "__main__":
     # indicators.PRICE_LR_ANGLE_1MIN("ftx", "BTC/USD")
     while True:
         indicators.calculate_indicators()
-        time.sleep(10)
+        time.sleep(2)
