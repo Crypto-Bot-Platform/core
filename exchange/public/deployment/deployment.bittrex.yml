@@ -23,14 +23,14 @@ spec:
           image: 'tsboris/cbp-bittrex-public:latest'
           env:
             - name: KAFKA_HOST
-              value: '10.0.0.124'
+              value: '10.0.0.104'
             - name: KAFKA_PORT
               value: '9092'
             - name: ELASTIC_HOST
-              value: '10.0.0.124'
+              value: '10.0.0.104'
             - name: ELASTIC_PORT
               value: '9200'
             - name: MONGODB_HOST
-              value: '10.0.0.124'
+              value: '10.0.0.104'
             - name: MONGODB_PORT
               value: '27017'
