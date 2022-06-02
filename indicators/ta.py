@@ -8,6 +8,7 @@ from eslogger import Logger
 from pandas import DataFrame
 from os import environ
 from schemas.recorder import RecorderSchema
+from concurrent.futures.thread import ThreadPoolExecutor
 
 
 class TechnicalAnalysisIndicators:
@@ -44,17 +45,26 @@ class TechnicalAnalysisIndicators:
             self.log.error(error.pgerror)
             return []
 
-    def get_closing_prices(self, exchange: str, pair: str, interval: str) -> Optional[DataFrame]:
+    def get_closing_prices(self, exchange: str, pair: str, interval: str, bucket_size: str = "1 minute") -> Optional[DataFrame]:
         c = self.conn.cursor()
+        bucket_minutes = int(bucket_size.split()[0])
         try:
-            query = f"""
-            SELECT time_bucket('1 minute', time) as bucket,
-            avg(closing_price) as avg_price
-            FROM ticks
-            WHERE time > (NOW() - INTERVAL '{interval}') and pair = '{pair}' and exchange = '{exchange}'
-            GROUP BY bucket
-            ORDER BY bucket; 
-            """
+            if bucket_size.split()[1] in ["minutes", "minute"] and bucket_minutes in [1,5,10,30,60]:
+                query = f"""
+                    SELECT closing_price as avg_price
+                    FROM ticks_{bucket_minutes}
+                    WHERE time > (NOW() - INTERVAL '{interval}') and pair = '{pair}' and exchange = '{exchange}'            
+                    ORDER BY time; 
+                """
+            else:
+                query = f"""
+                    SELECT time_bucket('{bucket_size}', time) as bucket,
+                        avg(closing_price) as avg_price
+                        FROM ticks
+                        WHERE time > (NOW() - INTERVAL '{interval}') and pair = '{pair}' and exchange = '{exchange}'
+                        GROUP BY bucket
+                        ORDER BY bucket; 
+                """
             c.execute(query)
             res = c.fetchall()
             return DataFrame(res)
@@ -64,23 +74,48 @@ class TechnicalAnalysisIndicators:
         finally:
             c.close()
 
-    def RSI(self, exchange: str, pair: str):
-        df = self.get_closing_prices(exchange, pair, '1 hour')
-        res = talib.RSI(df[1].to_numpy())
+    # TODO: Make it more modular! I'm just cutting corners
+    def __RSI(self, df: DataFrame, pair: str, exchange: str, suffix: str = "1D"):
+        res = talib.RSI(df[0].to_numpy())
         self.em.send_command_to_address("db-recorder", RecorderSchema, {
             "timestamp": int(time.time() * 1000),
             "type": "indicator",
             "data": {
                 "pair": pair,
                 "exchange": exchange,
-                "name": "RSI",
+                "name": f"RSI_{suffix}",
                 "value1": res[-1]
             }
         })
 
+    def RSI_1D(self, exchange: str, pair: str):
+        start = datetime.datetime.now()
+        df = self.get_closing_prices(exchange, pair, '1 day', '1 minute')
+        self.__RSI(df, pair, exchange)
+        print(f"RSI_1D: duration - {datetime.datetime.now() - start}")
+
+    def RSI_5D(self, exchange: str, pair: str):
+        start = datetime.datetime.now()
+        df = self.get_closing_prices(exchange, pair, '5 days', "5 minutes")
+        self.__RSI(df, pair, exchange, "5D")
+        print(f"RSI_5D: duration - {datetime.datetime.now() - start}")
+
+    def RSI_1M(self, exchange: str, pair: str):
+        start = datetime.datetime.now()
+        df = self.get_closing_prices(exchange, pair, '1 month', "30 minutes")
+        self.__RSI(df, pair, exchange, "1M")
+        print(f"RSI_1M: duration - {datetime.datetime.now() - start}")
+
+    def RSI_3M(self, exchange: str, pair: str):
+        start = datetime.datetime.now()
+        df = self.get_closing_prices(exchange, pair, '3 months', "60 minutes")
+        self.__RSI(df, pair, exchange, "3M")
+        print(f"RSI_3M: duration - {datetime.datetime.now() - start}")
+
     def MACD(self, exchange: str, pair: str):
+        start = datetime.datetime.now()
         df = self.get_closing_prices(exchange, pair, '1 hour')
-        macd, macdsignal, macdhist = talib.MACD(df[1].to_numpy())
+        macd, macdsignal, macdhist = talib.MACD(df[0].to_numpy())
         self.em.send_command_to_address("db-recorder", RecorderSchema, {
             "timestamp": int(time.time() * 1000),
             "type": "indicator",
@@ -93,22 +128,51 @@ class TechnicalAnalysisIndicators:
                 "value3": macdhist[-1]
             }
         })
+        print(f"MACD: duration - {datetime.datetime.now() - start}")
+
+    def PRICE_LR_ANGLE_5MIN(self, exchange: str, pair: str):
+        start = datetime.datetime.now()
+        df = self.get_closing_prices(exchange, pair, interval='5 minute', bucket_size="1 second")
+        lra = talib.LINEARREG_ANGLE(df[1].to_numpy())
+        self.em.send_command_to_address("db-recorder", RecorderSchema, {
+            "timestamp": int(time.time() * 1000),
+            "type": "indicator",
+            "data": {
+                "pair": pair,
+                "exchange": exchange,
+                "name": "PRICE_LR_ANGLE_5MIN",
+                "value1": lra[-1],
+            }
+        })
+        print(f"PRICE_LR_ANGLE_1MIN: duration - {datetime.datetime.now() - start}")
+
 
     def calculate_indicators(self):
-        # start = datetime.datetime.now()
         available_pairs = self.get_available_pairs()
-        # print(f"Found {len(available_pairs)} pairs. Calculating Indicators")
-        # count = 1
+        start = datetime.datetime.now()
+        print('Start generating indicators')
         for (exchange, pair) in available_pairs:
-            self.RSI(exchange, pair)
-            self.MACD(exchange, pair)
-            # print(f"{count}: Indicators ready for {exchange}, pair {pair}")
-            # count += 1
-        # print(f"Duration: {datetime.datetime.now() - start}")
+            print(f"Generating indicators for {exchange}, pair {pair}")
+            with ThreadPoolExecutor(max_workers=10) as executor:
+                # RSI
+                executor.submit(self.RSI_1D, exchange, pair)
+                executor.submit(self.RSI_5D, exchange, pair)
+                executor.submit(self.RSI_1M, exchange, pair)
+                executor.submit(self.RSI_3M, exchange, pair)
+
+                # MACD
+                executor.submit(self.MACD, exchange, pair)
+
+                # LR
+                executor.submit(self.PRICE_LR_ANGLE_5MIN, exchange, pair)
+        print(f"Finish generating indicators for. Duration: {datetime.datetime.now() - start}")
+
+
 
 
 if __name__ == "__main__":
     indicators = TechnicalAnalysisIndicators()
+    # indicators.PRICE_LR_ANGLE_1MIN("ftx", "BTC/USD")
     while True:
         indicators.calculate_indicators()
-        time.sleep(10)
+        time.sleep(2)
